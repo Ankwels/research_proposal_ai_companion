@@ -1,0 +1,426 @@
+<title>Wheel of Power</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400&display=swap">
+<style>
+/* Layout: the wheel is the instrument on the left and stays in view; the reading builds on the right. Stacks to one column on phones. */
+:root{
+  --bg:#eef0f4; --surface:#fafbfd; --ink:#1a1c27; --muted:#585c6e; --line:#d3d6e0; --accent:#0d6b66; --accent-soft:#d7ebe9;
+  --seg-sat:58%; --seg-l1:94%; --seg-l2:82%; --seg-l3:67%; --seg-ink:#1a1c27;
+  --display:"Archivo","Arial Narrow",system-ui,sans-serif;
+  --body:"Newsreader",Georgia,"Times New Roman",serif;
+  --ui:"Archivo",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#13141b; --surface:#1b1d26; --ink:#e9eaf1; --muted:#a3a7b8; --line:#2f3240; --accent:#5cc2b9; --accent-soft:#1d3b39;
+    --seg-sat:40%; --seg-l1:20%; --seg-l2:29%; --seg-l3:40%; --seg-ink:#eceef5; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#13141b; --surface:#1b1d26; --ink:#e9eaf1; --muted:#a3a7b8; --line:#2f3240; --accent:#5cc2b9; --accent-soft:#1d3b39;
+  --seg-sat:40%; --seg-l1:20%; --seg-l2:29%; --seg-l3:40%; --seg-ink:#eceef5; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--ui);font-size:15px;line-height:1.5}
+.wrap{max-width:1240px;margin:0 auto;padding-inline:20px;padding-block:28px 64px}
+header{display:grid;gap:10px;margin:0 auto 22px;max-width:1000px}
+.eyebrow{font-family:var(--ui);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
+h1{font-family:var(--display);font-stretch:72%;font-weight:800;font-size:clamp(40px,7vw,72px);line-height:.95;margin:0;letter-spacing:-.01em;text-wrap:balance}
+.lede{font-family:var(--body);font-size:19px;line-height:1.5;margin:0}
+.about{display:grid;gap:10px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding-block:18px;margin-block:8px}
+.about .prose{max-width:none}
+.about h2{font-family:var(--display);font-stretch:75%;font-weight:750;font-size:26px;margin:0;line-height:1.05}
+.privacy{font-size:13px;color:var(--muted);display:flex;gap:8px;align-items:flex-start}
+.privacy b{color:var(--ink);font-weight:600}
+.grid{display:grid;gap:26px;max-width:1000px;margin-inline:auto}
+.wheelcol{display:grid;gap:12px;min-width:0}
+.below{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:22px;align-items:start}
+.below>.col{align-content:start}
+@media (max-width:860px){.below{grid-template-columns:1fr}}
+.wheelbox{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:6px}
+svg#wheel{display:block;width:100%;height:auto;touch-action:none;user-select:none;-webkit-user-select:none;cursor:crosshair}
+.seg path{stroke:var(--bg);stroke-width:2}
+.seg.active path{stroke:var(--ink);stroke-width:2.5}
+.arcname{font-family:var(--display);font-stretch:62%;font-weight:700;font-size:22px;fill:var(--ink);letter-spacing:0;text-transform:uppercase}
+.bandlabel{font-family:var(--display);font-stretch:64%;font-weight:600;font-size:16.5px;fill:var(--seg-ink);pointer-events:none}
+.hub{fill:var(--ink)}
+.hubtext{font-family:var(--display);font-stretch:75%;font-weight:800;font-size:22px;fill:var(--bg);letter-spacing:.14em}
+.web{fill:var(--ink);fill-opacity:.12;stroke:var(--ink);stroke-width:2.5;stroke-linejoin:round;pointer-events:none}
+.dot{fill:var(--ink);stroke:var(--surface);stroke-width:3;pointer-events:none}
+.dot.active{fill:var(--accent)}
+.guide{fill:none;stroke:var(--ink);stroke-opacity:.18;stroke-dasharray:3 5;pointer-events:none}
+.scale-note{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;font-weight:600;padding-inline:4px}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+button,.btn{font-family:var(--ui);font-size:14px;font-weight:600;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:8px 12px;border-radius:4px;cursor:pointer;line-height:1.2}
+button:hover{border-color:var(--ink)}
+button:focus-visible,input:focus-visible,summary:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+button.ghost{background:transparent}
+.count{font-size:13px;color:var(--muted);margin-left:auto;font-variant-numeric:tabular-nums}
+.col{display:grid;gap:22px;min-width:0}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:18px 20px;display:grid;gap:12px;min-width:0}
+.panel h2{font-family:var(--display);font-stretch:75%;font-weight:750;font-size:26px;margin:0;line-height:1.05;text-wrap:balance}
+.panel h3{font-family:var(--display);font-stretch:80%;font-weight:700;font-size:17px;margin:0;letter-spacing:.01em}
+.label{font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:650}
+.prose{font-family:var(--body);font-size:17.5px;line-height:1.55;max-width:64ch}
+.prose p{margin:0 0 .7em}
+.prose p:last-child{margin-bottom:0}
+.banner{background:var(--accent-soft);border-radius:4px;padding:10px 14px;font-size:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.banner b{font-weight:650}
+.positions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.pos{border:1px solid var(--line);border-radius:4px;padding:8px 10px;font-size:13.5px;line-height:1.3;display:grid;gap:2px}
+.pos small{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:650}
+.pos.on{border-color:var(--ink);background:var(--bg);font-weight:600}
+.op{font-size:13.5px;color:var(--muted)}
+.op b{color:var(--ink);font-weight:600}
+.meters{display:grid;gap:14px}
+.meter{display:grid;gap:6px}
+.meter-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.meter-head span{font-size:14px;font-weight:600}
+.meter-head strong{font-family:var(--display);font-stretch:75%;font-weight:800;font-size:34px;line-height:1;font-variant-numeric:tabular-nums}
+.bar{height:10px;border-radius:5px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ink);border-radius:5px;transition:width .35s ease}
+.bar.int i{background:var(--accent)}
+.meter p{margin:0;font-size:13px;color:var(--muted)}
+.profile-tag{display:inline-block;font-family:var(--display);font-stretch:75%;font-weight:800;font-size:24px;letter-spacing:.04em;text-transform:uppercase;padding:6px 14px;border-radius:3px;background:var(--ink);color:var(--bg);justify-self:start}
+.pulls{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+.pulls li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;align-items:baseline;border-top:1px solid var(--line);padding-top:8px;font-size:14.5px}
+.pulls li span{color:var(--muted);font-size:13px;grid-column:1/-1}
+.pulls b{font-variant-numeric:tabular-nums;font-weight:650}
+.frames{display:grid;gap:10px}
+.frame{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 14px;align-items:center;font-size:14.5px}
+.frame strong{font-family:var(--display);font-stretch:75%;font-weight:800;font-size:26px;font-variant-numeric:tabular-nums;min-width:3.2ch}
+ol.qs{margin:0;padding-left:1.2em;font-family:var(--body);font-size:17px;display:grid;gap:6px}
+details{border-top:1px solid var(--line);padding-top:10px}
+summary{cursor:pointer;font-weight:650;font-size:14.5px}
+.sliders{display:grid;gap:10px;margin-top:12px}
+.sl{display:grid;grid-template-columns:8.5em minmax(0,1fr) 2.2em;gap:10px;align-items:center;font-size:13.5px}
+.sl input{width:100%}
+.sl output{font-variant-numeric:tabular-nums;color:var(--muted);text-align:right}
+.anchors{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;margin-top:10px;font-size:13.5px}
+.anchors label{display:flex;gap:6px;align-items:center}
+.setting{display:grid;gap:6px;margin-top:14px;font-size:14px}
+.setting input[type=range]{width:100%}
+.refs{font-size:13.5px;line-height:1.45;display:grid;gap:6px;margin:0;padding-left:1.1em}
+.refs a{color:var(--accent)}
+.versions{display:grid;gap:10px;font-size:14.5px}
+.versions div{border-left:3px solid var(--line);padding-left:12px}
+.versions b{font-weight:650}
+.credit{max-width:1000px;margin:40px auto 0;padding-top:14px;border-top:1px solid var(--line);font-size:11.5px;line-height:1.5;color:var(--muted);display:grid;gap:4px}
+.credit p{margin:0}
+.credit a{color:inherit}
+.empty{font-family:var(--body);font-size:17px;color:var(--muted);margin:0}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Positionality activity · 16 dimensions</div>
+    <h1>Wheel of Power</h1>
+    <section class="about">
+      <h2>About this activity</h2>
+      <div class="prose">
+        <p>The Wheel of Power is a reflective tool that helps you think about how different aspects of identity and social position can shape people's experiences. It brings together dimensions such as gender, race and ethnicity, sexuality, education, wealth, health and citizenship, and invites you to consider how these may influence opportunities, expectations and barriers within society.</p>
+        <p>The wheel is based on ideas from social theory, including privilege, marginalisation and intersectionality. These concepts suggest that people's experiences are shaped not by a single characteristic, but by the interaction of multiple dimensions of identity and social position.</p>
+        <p>The centre of the wheel represents positions that are more likely to align with dominant social norms and institutions. The edge represents positions that are more likely to experience exclusion, disadvantage or marginalisation. Most people will find that some of their positions sit closer to the centre while others sit closer to the edge.</p>
+        <p>This activity is not a test and does not measure your worth, character, success or contribution. It cannot capture the full complexity of a person's life. Instead, it is designed to support reflection and discussion about how social structures can create advantages for some groups and barriers for others.</p>
+        <p>There are no right or wrong answers. You may disagree with aspects of the wheel, place yourself differently from other people, or feel that your experiences are not fully represented. Those responses are part of the learning process. The aim is not to reach a single correct interpretation, but to think critically about how identity, power and inequality operate in different contexts.</p>
+      </div>
+    </section>
+    <p class="lede">Place a dot in each section of the wheel to show where you think you sit. The centre represents positions that are more likely to align with dominant social norms and institutions. The edge represents positions that are more likely to experience marginalisation or exclusion. As you place your dots, a pattern will form across the wheel, helping you reflect on how different dimensions of identity and social position interact.</p>
+    <div class="privacy"><span aria-hidden="true">●</span><span><b>This activity is private.</b> Your responses remain in this browser tab and are not saved or shared. Closing the tab will remove all dots. You may leave any section blank if you prefer not to answer.</span></div>
+  </header>
+
+  <div class="grid">
+    <section class="panel" id="dimpanel" aria-live="polite"></section>
+    <div class="wheelcol">
+      <div class="banner" id="banner" hidden><span>You are viewing <b id="exname"></b>, an example profile.</span><button class="ghost" id="clear2" type="button">Clear and place your own</button></div>
+      <div class="wheelbox"><svg id="wheel" viewBox="-500 -500 1000 1000" role="img" aria-label="Wheel of power with 16 wedges. Tap inside a wedge to place a dot."></svg></div>
+      <div class="scale-note"><span>Centre · greater social power</span><span>Edge · greater marginalisation</span></div>
+      <div class="toolbar">
+        <button type="button" id="clear">Clear the wheel</button>
+        <span class="count" id="count"></span>
+      </div>
+    </div>
+
+    <div class="below">
+    <div class="col">
+      <section class="panel" id="reading">
+        <div class="label">Your reading</div>
+        <div id="readingbody"></div>
+      </section>
+
+      <section class="panel">
+        <div class="label">Try a comparison</div>
+        <div class="prose"><p>Load the example profiles below and compare their results. These examples are designed to show how changes in one or more dimensions can affect the overall pattern of the wheel.</p><p>Examples C and D differ only in race and skin colour. Comparing them can help you consider how a single dimension may influence the overall reading.</p></div>
+        <div class="toolbar" id="examples"></div>
+      </section>
+    </div>
+    <div class="col">
+      <section class="panel">
+        <div class="label">Place with sliders</div>
+        <details id="sliderdetails">
+          <summary>Use sliders instead of selecting points on the wheel</summary>
+          <div class="sliders" id="sliders"></div>
+        </details>
+      </section>
+
+      <section class="panel">
+        <div class="label">How the numbers work</div>
+        <div class="prose">
+          <p>The percentages used in this activity are a teaching tool. They are not objective measurements of a person, identity or experience.</p>
+          <p>The scoring was designed for this activity and is not taken from a published method. The interpretation of the scores is based on the work of Ange-Marie Hancock (2007), Lisa Bowleg (2008) and Greta Bauer (2014), who examine how different dimensions of identity and social position interact.</p>
+          <p>Each dot represents a position along one dimension, measured as a distance from the centre of the wheel. The activity interprets these positions in two different ways.</p>
+          <p>The <b>positional score</b> calculates an overall score by combining all dimensions. The anchor dimensions count double. This approach treats each dimension as a separate factor.</p>
+          <p>The <b>intersectional score</b> assumes that dimensions influence one another. A person may hold advantages in some areas while experiencing marginalisation in others. The intersectional score therefore examines how different dimensions interact rather than considering them independently.</p>
+          <p>For example, a person may hold advantages associated with wealth or education while also occupying positions that are further from the social norm on other dimensions. The interaction between these positions may shape how those advantages are experienced.</p>
+          <p>When several anchor dimensions sit further from the centre, their combined effect becomes more significant. Hancock describes this as a limitation of approaches that simply add categories together. Social experiences are often shaped by interactions between dimensions, not by individual dimensions alone.</p>
+          <p>Bowleg makes a related critique. Any approach that reduces identities to separate categories risks overlooking how those categories are lived together. The two scores are presented side by side so that you can compare them and consider the assumptions behind each approach.</p>
+        </div>
+        <details>
+          <summary>Lecturer settings</summary>
+          <div class="setting">
+            <label for="alpha">Interaction strength: <b id="alphaout"></b></label>
+            <input type="range" id="alpha" min="0" max="0.6" step="0.05" value="0.3">
+            <span class="op">Setting this value to 0 removes the interaction effect and makes the positional and intersectional scores identical.</span>
+          </div>
+          <div class="setting">
+            <span>Anchor dimensions (count double and influence the interpretation of other dimensions)</span>
+            <div class="anchors" id="anchors"></div>
+          </div>
+        </details>
+      </section>
+
+      <section class="panel">
+        <div class="label">Versions of the wheel</div>
+        <div class="versions">
+          <div><b>Canadian Council for Refugees</b><br>An anti-oppression wheel later adapted by Sylvia Duckworth.</div>
+          <div><b>Sylvia Duckworth (2020)</b><br>A twelve-dimension version including citizenship, skin colour, formal education, ability, sexuality, neurodiversity, mental health, body size, housing, wealth, language and gender.</div>
+          <div><b>Open Oregon Educational Resources (Puttman, Willi Hooper and Antrosiglio)</b><br>A sixteen-dimension version that adds race and ethnicity, indigeneity, geography and marital status. It also identifies forms of oppression associated with each dimension. This activity is based on that version.</div>
+          <div><b>FORRT Academic Wheel of Privilege</b><br>A version designed for academic contexts, developed through work on neurodiversity, open scholarship and equity in higher education.</div>
+        </div>
+        <details>
+          <summary>Sources and further reading</summary>
+          <ul class="refs">
+            <li>Duckworth, S. (2020) <a href="https://flic.kr/p/2jWxeGG" target="_blank" rel="noopener">Wheel of Power/Privilege</a>. CC BY-NC-ND 2.0.</li>
+            <li>Puttman, K., Willi Hooper, M. and Antrosiglio, L. <a href="https://openoregon.pressbooks.pub/soceveryday1e/back-matter/image-descriptions/" target="_blank" rel="noopener">Wheel of Power and Privilege</a>. Open Oregon Educational Resources. CC BY 4.0.</li>
+            <li>Crenshaw, K. (1989) Demarginalizing the Intersection of Race and Sex. <i>University of Chicago Legal Forum</i>.</li>
+            <li>Collins, P. H. (1990) <i>Black Feminist Thought</i>.</li>
+            <li>Connell, R. W. (1995) <i>Masculinities</i>.</li>
+            <li>Hancock, A.-M. (2007) When Multiplication Doesn't Equal Quick Addition. <i>Perspectives on Politics</i>, 5(1).</li>
+            <li>Bowleg, L. (2008) <a href="https://doi.org/10.1007/s11199-008-9400-z" target="_blank" rel="noopener">When Black + Lesbian + Woman ≠ Black Lesbian Woman</a>. <i>Sex Roles</i>, 59.</li>
+            <li>Bauer, G. R. (2014) <a href="https://pubmed.ncbi.nlm.nih.gov/24704889/" target="_blank" rel="noopener">Incorporating Intersectionality Theory into Population Health Research Methodology</a>. <i>Social Science &amp; Medicine</i>, 110, pp. 10-17.</li>
+            <li>Purdie-Vaughns, V. and Eibach, R. P. (2008) <a href="https://doi.org/10.1007/s11199-008-9424-4" target="_blank" rel="noopener">Intersectional Invisibility</a>. <i>Sex Roles</i>, 59.</li>
+            <li><a href="https://radicalteacher.library.pitt.edu/ojs/radicalteacher/article/view/695" target="_blank" rel="noopener">Intersectional Approaches to Teaching About Privileges</a>. <i>Radical Teacher</i>.</li>
+            <li><a href="https://scholarworks.iu.edu/journals/index.php/josotl/article/view/34707" target="_blank" rel="noopener">The Limits of White Privilege Pedagogy</a>. <i>Journal of the Scholarship of Teaching and Learning</i>.</li>
+          </ul>
+        </details>
+      </section>
+    </div>
+    </div>
+  </div>
+  <footer class="credit">
+    <p>© 2026 Dr Àngels Trias-i-Valls (with Claude Opus 5.5). This interactive activity is an AI-adapted version of the <a href="https://openoregon.pressbooks.pub/soceveryday1e/back-matter/image-descriptions/" target="_blank" rel="noopener">Wheel of Power and Privilege</a> by Kimberly Puttman, Michaela Willi Hooper and Lauren Antrosiglio, Open Oregon Educational Resources, CC BY 4.0, which draws on earlier work by Sylvia Duckworth (2020) and the Canadian Council for Refugees.</p>
+    <p>AI disclosure: the interactive design and scoring were developed with Claude Opus 5.5. Concept, pedagogic adaptation and revised text by Dr Àngels Trias-i-Valls.</p>
+  </footer>
+</div>
+
+<script>
+(function(){
+const DIMS=[
+ {n:'Gender',full:'Gender identity',bands:['cisgender man','cisgender woman','trans, intersex, nonbinary'],w:['cis man','cis woman','trans, intersex,\nnonbinary'],op:'Sexism, cisgenderism',anchor:true},
+ {n:'Sexuality',full:'Sexual orientation',bands:['heterosexual','gay man','lesbian, bi, pan, asexual'],w:['straight','gay man','lesbian, bi,\npan, asexual'],op:'Heterosexism',anchor:true},
+ {n:'Marital status',full:'Marital status',bands:['married','engaged or partnered','single or non-monogamous'],w:['married','partnered','single,\nnon-monogamous'],op:'Heterosexism, heteronormativity'},
+ {n:'Race',full:'Race and ethnicity',bands:['white','white-passing','Black, Indigenous, People of Colour'],w:['white','white-passing','Black, Indigenous,\nPeople of Colour'],op:'Racism',anchor:true},
+ {n:'Skin colour',full:'Skin colour',bands:['white','medium shades','dark'],w:['white','medium\nshades','dark'],op:'Colourism'},
+ {n:'Indigeneity',full:'Indigeneity',bands:['settler','mixed or contested','Indigenous'],w:['settler','mixed','Indigenous'],op:'Colonialism'},
+ {n:'Citizenship',full:'Citizenship',bands:['citizen, national passport','documented non-citizen, visa','undocumented'],w:['citizen','visa holder','undocumented'],op:'Nativism'},
+ {n:'Language',full:'Language',bands:['English as first language','learned English','little or no English'],w:['native English','learned\nEnglish','non-English'],op:'Xenophobia, linguicism'},
+ {n:'Geography',full:'Geography',bands:['city','suburb','rural or inner city'],w:['city','suburb','rural,\ninner city'],op:'Classism'},
+ {n:'Wealth',full:'Wealth and social class',bands:['wealthy','middle class','poor or working poor'],w:['wealthy','middle\nclass','poor'],op:'Classism',anchor:true},
+ {n:'Housing',full:'Housing',bands:['property owner','renting or sheltered','houseless'],w:['owner','renting','houseless'],op:'Classism'},
+ {n:'Education',full:'Formal education',bands:['university','secondary school','primary school'],w:['university','secondary','primary'],op:'Credentialism',anchor:true},
+ {n:'Neurodiversity',full:'Neurodiversity',bands:['neurotypical','some neurodivergence','significant neurodivergence'],w:['neurotypical','some neuro-\ndivergence','significant\nneurodivergence'],op:'Ableism'},
+ {n:'Health',full:'Physical and mental health',bands:['robust','mostly stable','vulnerable'],w:['robust','mostly\nstable','vulnerable'],op:'Ableism'},
+ {n:'Ability',full:'Ability',bands:['able-bodied','some disability','significant disability'],w:['able-bodied','some\ndisability','significant\ndisability'],op:'Ableism'},
+ {n:'Body size',full:'Body size',bands:['slim','average','large'],w:['slim','average','large'],op:'Sizeism'}
+];
+const N=DIMS.length, STEP=360/N, R0=70, R3=430, RB=[70,190,310,430];
+const EX=[
+ {id:'A',name:'Example A: Wealthy, university-educated gay man living in a city',d:[.1,.5,.55,.08,.08,.08,.1,.1,.1,.12,.15,.1,.12,.15,.1,.2]},
+ {id:'B',name:'Example B: Wealthy, university-educated straight woman living in a city',d:[.5,.1,.12,.08,.08,.08,.1,.1,.1,.12,.15,.1,.12,.15,.1,.25]},
+ {id:'C',name:'Example C: Black, neurodivergent lesbian woman living in a rural area',d:[.5,.85,.72,.88,.85,.2,.15,.15,.85,.6,.55,.45,.62,.45,.15,.45]},
+ {id:'D',name:'Example D: The same profile as Example C, but white',d:[.5,.85,.72,.08,.08,.2,.15,.15,.85,.6,.55,.45,.62,.45,.15,.45]}
+];
+let dots=new Array(N).fill(null), active=null, exampleName=null, alpha=.3;
+let anchors=new Set(DIMS.map((d,i)=>d.anchor?i:-1).filter(i=>i>=0));
+
+const svg=document.getElementById('wheel'), NS='http://www.w3.org/2000/svg';
+const el=(t,a={},p)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e};
+const P=(r,deg)=>{const a=deg*Math.PI/180;return [r*Math.sin(a),-r*Math.cos(a)]};
+const f=v=>v.toFixed(2);
+function sector(r1,r2,a0,a1){const [x1,y1]=P(r1,a0),[x2,y2]=P(r2,a0),[x3,y3]=P(r2,a1),[x4,y4]=P(r1,a1);
+ return `M${f(x1)} ${f(y1)}L${f(x2)} ${f(y2)}A${r2} ${r2} 0 0 1 ${f(x3)} ${f(y3)}L${f(x4)} ${f(y4)}A${r1} ${r1} 0 0 0 ${f(x1)} ${f(y1)}Z`}
+const hue=i=>Math.round((i*360/N+8)%360);
+
+const defs=el('defs',{},svg);
+const segG=el('g',{},svg), labelG=el('g',{},svg), guideG=el('g',{},svg);
+const segEls=[];
+DIMS.forEach((d,i)=>{
+ const mid=i*STEP, a0=mid-STEP/2, a1=mid+STEP/2, h=hue(i);
+ const g=el('g',{class:'seg'},segG); segEls.push(g);
+ ['--seg-l1','--seg-l2','--seg-l3'].forEach((L,b)=>{
+  el('path',{d:sector(RB[b],RB[b+1],a0,a1),style:`fill:hsl(${h} var(--seg-sat) var(${L}))`},g);
+ });
+ // arc name
+ const bottom=mid>90&&mid<270, r=bottom?472:452;
+ const [sx,sy]=P(r,bottom?a1-1:a0+1),[ex,ey]=P(r,bottom?a0+1:a1-1);
+ el('path',{id:'arc'+i,d:`M${f(sx)} ${f(sy)}A${r} ${r} 0 0 ${bottom?0:1} ${f(ex)} ${f(ey)}`,fill:'none'},defs);
+ const t=el('text',{class:'arcname'},labelG); const tp=el('textPath',{href:'#arc'+i,startOffset:'50%','text-anchor':'middle'},t); tp.textContent=d.n;
+ // band labels
+ d.w.forEach((lab,b)=>{
+  const rm=(RB[b]+RB[b+1])/2+(b===0?6:0), [x,y]=P(rm,mid), rot=mid<180?mid-90:mid+90;
+  const tx=el('text',{class:'bandlabel',transform:`translate(${f(x)} ${f(y)}) rotate(${f(rot)})`,'text-anchor':'middle','dominant-baseline':'middle'},labelG);
+  const lines=lab.split('\n');
+  lines.forEach((ln,k)=>{const s=el('tspan',{x:0,dy:k===0?`${-(lines.length-1)*0.55}em`:'1.1em'},tx);s.textContent=ln});
+ });
+});
+el('circle',{r:RB[1],class:'guide'},guideG); el('circle',{r:RB[2],class:'guide'},guideG);
+el('circle',{r:R0-4,class:'hub'},guideG);
+const ht=el('text',{class:'hubtext','text-anchor':'middle','dominant-baseline':'middle',y:2},guideG); ht.textContent='POWER';
+const web=el('polygon',{class:'web'},svg);
+const dotG=el('g',{},svg);
+
+function localPt(e){const pt=svg.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;return pt.matrixTransform(svg.getScreenCTM().inverse())}
+function segAt(x,y){let ang=Math.atan2(x,-y)*180/Math.PI;ang=(ang+360)%360;return Math.floor(((ang+STEP/2)%360)/STEP)}
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const distFromR=r=>clamp((r-R0)/(R3-R0),.02,.98);
+let dragging=false;
+svg.addEventListener('pointerdown',e=>{
+ const p=localPt(e), r=Math.hypot(p.x,p.y);
+ if(r<R0-4||r>R3+8)return;
+ const i=segAt(p.x,p.y); active=i; dragging=true; svg.setPointerCapture(e.pointerId);
+ setDot(i,distFromR(r)); e.preventDefault();
+});
+svg.addEventListener('pointermove',e=>{if(!dragging||active==null)return;const p=localPt(e);setDot(active,distFromR(Math.hypot(p.x,p.y)))});
+const end=()=>{dragging=false};
+svg.addEventListener('pointerup',end); svg.addEventListener('pointercancel',end);
+
+function setDot(i,d,fromSlider){dots[i]=d;exampleName=null;if(!fromSlider)active=i;render()}
+
+const band=d=>d<1/3?0:d<2/3?1:2;
+
+function readings(dd,ex){
+ let sw=0,sa=0,si=0,n=0;
+ for(let i=0;i<N;i++){
+  if(dd[i]==null||i===ex)continue;
+  const w=anchors.has(i)?2:1; let disc=1;
+  anchors.forEach(j=>{if(j!==i&&j!==ex&&dd[j]!=null)disc*=(1-alpha*dd[j])});
+  sw+=w; sa+=w*(1-dd[i]); si+=w*(1-dd[i])*disc; n++;
+ }
+ return sw?{add:sa/sw,int:si/sw,n}:{add:0,int:0,n:0};
+}
+const pct=v=>Math.round(v*100);
+const listNames=arr=>{const a=arr.map(i=>DIMS[i].full.toLowerCase());return a.length<=1?a.join(''):a.slice(0,-1).join(', ')+' and '+a[a.length-1]};
+
+function render(){
+ // wheel
+ segEls.forEach((g,i)=>g.classList.toggle('active',i===active));
+ dotG.innerHTML='';
+ const pts=[];
+ dots.forEach((d,i)=>{if(d==null)return;const r=R0+d*(R3-R0),[x,y]=P(r,i*STEP);pts.push(`${f(x)},${f(y)}`);el('circle',{cx:f(x),cy:f(y),r:i===active?10:8,class:'dot'+(i===active?' active':'')},dotG)});
+ web.setAttribute('points',pts.length>=2?pts.join(' '):'');
+ const placed=dots.filter(d=>d!=null).length;
+ document.getElementById('count').textContent=`${placed} of ${N} dimensions completed`;
+ const bn=document.getElementById('banner'); bn.hidden=!exampleName; if(exampleName)document.getElementById('exname').textContent=exampleName.charAt(0).toLowerCase()+exampleName.slice(1);
+ renderDim(); renderReading(); syncSliders();
+}
+
+function renderDim(){
+ const box=document.getElementById('dimpanel');
+ if(active==null){
+  box.innerHTML=`<div class="label">How to place a dot</div><h2>Select a section of the wheel</h2><div class="prose"><p>Dots closer to the centre represent positions that are generally associated with greater social power. Dots closer to the edge represent positions that are more commonly associated with marginalisation.</p><p>Drag a dot to adjust its position. You do not need to place it at an exact point. Many people's experiences fall between the centre and the edge.</p></div>`;
+  return;
+ }
+ const d=DIMS[active], v=dots[active], b=v==null?-1:band(v), tags=['Centre','Middle','Edge'];
+ box.innerHTML=`<div class="label">${anchors.has(active)?'Anchor dimension':'Dimension'} ${active+1} of ${N}</div>
+ <h2>${d.full}</h2>
+ <div class="positions">${d.bands.map((t,k)=>`<div class="pos${k===b?' on':''}"><small>${tags[k]}</small>${t}</div>`).join('')}</div>
+ <div class="op">Form of oppression identified on the wheel: <b>${d.op}</b></div>
+ <div class="toolbar">${v!=null?`<span class="op">Your dot is ${pct(v)}% of the distance from the centre to the edge.</span><button type="button" class="ghost" id="rm">Remove this dot</button>`:'<span class="op">No dot has been placed yet. Select a point within this section to add one.</span>'}</div>`;
+ const rm=document.getElementById('rm'); if(rm)rm.onclick=()=>{dots[active]=null;render()};
+}
+
+function renderReading(){
+ const box=document.getElementById('readingbody');
+ const placed=dots.filter(d=>d!=null).length;
+ const placedAnchors=[...anchors].filter(i=>dots[i]!=null);
+ if(placed<8||placedAnchors.length<3){
+  box.innerHTML=`<p class="empty">Place at least 8 dots, including at least 3 anchor dimensions (${listNames([...anchors])}), and your reading will appear below. You have completed ${placed} so far.</p>`;
+  return;
+ }
+ const R=readings(dots), gap=pct(R.add)-pct(R.int);
+ const depart=placedAnchors.filter(i=>dots[i]>.4), farA=placedAnchors.filter(i=>dots[i]>.6);
+ const central=dots.map((d,i)=>d!=null&&d<.3?i:-1).filter(i=>i>=0), far=dots.map((d,i)=>d!=null&&d>.66?i:-1).filter(i=>i>=0);
+ let tag,text;
+ if(depart.length===0){
+  tag='Normative centre';
+  text=`<p>Your dots sit close to the centre on every anchor dimension: ${listNames(placedAnchors)}. In this activity, these positions represent social norms that are often treated as ordinary or expected.</p><p>People who occupy socially dominant positions may not notice them because they are rarely questioned or challenged. As a result, these positions can feel natural or invisible to those who hold them.</p><p>Consider which of these positions you have never had to explain, justify or defend.</p>${far.length?`<p>Now look at ${listNames(far)}, where your position sits further from the centre. These may be areas where you have experienced barriers, exclusion or difference from the norm.</p>`:''}`;
+ }else if(depart.length<=2&&R.add>=.6){
+  tag='Contested centre';
+  text=`<p>Most of your dots sit close to the centre, but you sit further from it on ${listNames(depart)}.</p><p>Social positions rarely operate in isolation. Advantages associated with one dimension can be strengthened, weakened or challenged by another. As a result, a person may be close to the centre in many areas while still experiencing exclusion in others.</p><p>Connell describes this as a subordinated position within a dominant group. For example, a wealthy, highly educated gay man may hold significant social advantages while still being excluded from a norm organised around heterosexuality. Similarly, a wealthy, highly educated woman may be close to the centre in many respects while still experiencing gendered inequalities.</p>`;
+ }else if(farA.length>=3||R.int<.3){
+  tag='Compounded periphery';
+  text=`<p>Several of your anchor dimensions sit closer to the edge: ${listNames(farA.length?farA:depart)}.</p><p>Research on intersectionality suggests that these positions cannot always be understood separately. Different dimensions of identity and social position interact to shape people's experiences.</p><p>Kimberlé Crenshaw first demonstrated this through her work on Black women, whose experiences could not be fully explained by looking at race alone or gender alone. The interaction between dimensions created experiences that neither category could fully capture on its own.</p><p>Purdie-Vaughns and Eibach describe one consequence as intersectional invisibility. People who do not fit the typical image of any single social group may be less likely to be recognised, represented or understood when discrimination occurs.</p>`;
+ }else{
+  tag='Split position';
+  text=`<p>Your dots are distributed across the wheel rather than concentrated at either the centre or the edge. You hold relatively advantaged positions on ${central.length?listNames(central):'some dimensions'} and more marginalised positions on ${listNames(far.length?far:depart)}.</p><p>The meaning of your position depends on the context. In some situations you may benefit from dimensions that place you close to the centre. In other situations, people may respond primarily to dimensions that place you further from it.</p><p>Patricia Hill Collins describes this wider pattern as a matrix of domination. People can experience both privilege and disadvantage at the same time because different social dimensions become important in different situations.</p>`;
+ }
+ // counterfactuals
+ const cf=depart.map(j=>{const dd=dots.slice();dd[j]=0;return {j,v:readings(dd).int}}).sort((a,b)=>b.v-a.v);
+ const pulls=cf.slice(0,3).map(c=>`<li><span>${DIMS[c.j].full}: your dot is close to “${DIMS[c.j].bands[band(dots[c.j])]}”</span>If this dot moved to the centre: <b>${pct(R.int)}% → ${pct(c.v)}%</b></li>`).join('');
+ const frames=depart.slice(0,3).map(j=>{const r=readings(dots,j);return `<div class="frame"><strong>${pct(r.int)}%</strong><span>measured only among people who share your position on ${DIMS[j].full.toLowerCase()} (${DIMS[j].bands[band(dots[j])]})</span></div>`}).join('');
+ box.innerHTML=`<div style="display:grid;gap:16px">
+  <div style="display:grid;gap:6px"><div class="label">Your position is</div><span class="profile-tag">${tag}</span></div>
+  <div class="prose">${text}</div>
+  <div class="meters">
+   <div class="meter"><div class="meter-head"><span>Positional score</span><strong>${pct(R.add)}%</strong></div><div class="bar"><i style="width:${pct(R.add)}%"></i></div><p>This score treats each dimension separately and combines them into an overall result.</p></div>
+   <div class="meter"><div class="meter-head"><span>Intersectional score</span><strong>${pct(R.int)}%</strong></div><div class="bar int"><i style="width:${pct(R.int)}%"></i></div><p>This score considers how different dimensions may influence one another. Rather than treating each dimension as independent, it explores how social positions can interact to shape lived experience.</p><p>The difference between the two scores is ${gap} points.${gap>=15?' The interaction between your positions has a strong effect on the overall score.':gap<=5?' The two approaches produce similar results, suggesting that the dimensions are contributing in broadly similar ways.':''}</p></div>
+  </div>
+  <div style="display:grid;gap:8px"><h3>About this reading</h3><div class="prose"><p>This activity is designed to support reflection rather than provide a definitive answer about who you are. The wheel does not measure your worth, character, effort or achievements. Instead, it encourages you to think about how social structures can create advantages for some groups and barriers for others.</p><p>The centre of the wheel represents positions that are more likely to be treated as normal, expected or unremarkable within society. The edge represents positions that are more likely to experience exclusion, disadvantage or marginalisation.</p><p>Most people will find that some of their positions sit closer to the centre while others sit closer to the edge. The aim is not to place people into fixed categories, but to explore how different dimensions of identity and social position interact.</p></div></div>
+  ${pulls?`<div style="display:grid;gap:8px"><h3>What pulls you away from the centre?</h3><p class="op" style="margin:0">Each line shows what would happen if one dimension moved to the centre while all other dimensions stayed the same. The first line identifies the dimension with the greatest influence on your overall reading.</p><ul class="pulls">${pulls}</ul></div>`:''}
+  ${frames?`<div style="display:grid;gap:8px"><h3>Compared with whom?</h3><div class="frames"><div class="frame"><strong>${pct(R.int)}%</strong><span>measured against all positions represented in the wheel</span></div>${frames}</div><p class="op" style="margin:0">Social advantage and disadvantage are always relative. A position that appears close to the norm in one comparison may appear much further from it in another. The comparison you make changes what becomes visible.</p></div>`:''}
+  <div style="display:grid;gap:8px"><h3>Before you discuss</h3><ol class="qs"><li>Which dimensions did you place quickly, and which required more thought?</li><li>Which dimension do you think other people notice first about you? Is it the same dimension you noticed first?</li><li>Would any of your dots move if you were in a different country, institution, social setting or period of your life?</li></ol></div>
+ </div>`;
+}
+
+// sliders
+const slBox=document.getElementById('sliders');
+DIMS.forEach((d,i)=>{
+ const row=document.createElement('div');row.className='sl';
+ row.innerHTML=`<label for="s${i}">${d.n}</label><input type="range" id="s${i}" min="0" max="100" step="1" aria-label="${d.full}, where 0 represents the centre and 100 represents the edge"><output id="o${i}">–</output>`;
+ slBox.appendChild(row);
+ row.querySelector('input').addEventListener('input',e=>{active=i;setDot(i,clamp(e.target.value/100,.02,.98),true)});
+});
+function syncSliders(){DIMS.forEach((d,i)=>{const s=document.getElementById('s'+i),o=document.getElementById('o'+i);if(dots[i]==null){s.value=0;o.textContent='–'}else{s.value=Math.round(dots[i]*100);o.textContent=Math.round(dots[i]*100)}})}
+
+// anchors + alpha
+const anBox=document.getElementById('anchors');
+DIMS.forEach((d,i)=>{const l=document.createElement('label');l.innerHTML=`<input type="checkbox" id="a${i}" ${anchors.has(i)?'checked':''}> ${d.n}`;anBox.appendChild(l);
+ l.querySelector('input').addEventListener('change',e=>{e.target.checked?anchors.add(i):anchors.delete(i);render()})});
+const al=document.getElementById('alpha'),ao=document.getElementById('alphaout');
+const setA=()=>{alpha=+al.value;ao.textContent=alpha.toFixed(2)};
+al.addEventListener('input',()=>{setA();render()}); setA();
+
+// examples
+const exBox=document.getElementById('examples');
+EX.forEach(x=>{const b=document.createElement('button');b.type='button';b.textContent='Example '+x.id;b.title=x.name;b.onclick=()=>loadEx(x);exBox.appendChild(b)});
+function loadEx(x){dots=x.d.slice();exampleName=x.name.replace(/^Example \w: /,'');active=null;render()}
+function clearAll(){dots=new Array(N).fill(null);exampleName=null;active=null;render()}
+document.getElementById('clear').onclick=clearAll;
+document.getElementById('clear2').onclick=clearAll;
+
+loadEx(EX[0]);
+})();
+</script>
